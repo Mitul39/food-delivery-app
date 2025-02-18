@@ -81,3 +81,16 @@ if selected_items and st.button("✅ Confirm Order"):
         st.session_state.order_history.extend(order_data)
 
         st.success(f"✅ Order placed successfully! Total: ₹{total_bill}")
+
+# View Revenue Button
+if st.button("💰 View Revenue"):
+    # Load order history
+    orders = pd.read_excel(ORDER_FILE, engine="openpyxl")
+
+    # Group by shop and calculate revenue
+    revenue = orders.groupby("Shop")["Price"].sum().reset_index()
+    revenue = revenue.rename(columns={"Price": "Total Revenue (₹)"})
+
+    # Display the revenue
+    st.subheader("📊 Revenue Report")
+    st.dataframe(revenue)
