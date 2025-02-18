@@ -21,6 +21,10 @@ for _, row in df.iterrows():
         menus[shop] = {}
     menus[shop][item] = {"price": price, "category": category}
 
+# Ensure order file exists
+if not os.path.exists(ORDER_FILE):
+    pd.DataFrame(columns=["Customer", "Shop", "Food Item", "Price"]).to_excel(ORDER_FILE, index=False, engine="openpyxl")
+
 # Initialize Session State for Order History
 if "order_history" not in st.session_state:
     st.session_state.order_history = []
@@ -68,75 +72,12 @@ if selected_items and st.button("✅ Confirm Order"):
     else:
         order_data = [[customer_name, shop_name, item, filtered_menu[item]["price"]] for item in selected_items]
 
-        # Save Order to Excel
-        try:
-            existing_orders = pd.read_excel(ORDER_FILE, engine="openpyxl")
-            updated_orders = pd.concat([existing_orders, pd.DataFrame(order_data, columns=["Customer", "Shop", "Food Item", "Price"])], ignore_index=True)
-        except FileNotFoundError:
-            updated_orders = pd.DataFrame(order_data, columns=["Customer", "Shop", "Food Item", "Price"])
-
+        # Load existing data and append new order
+        existing_orders = pd.read_excel(ORDER_FILE, engine="openpyxl")
+        updated_orders = pd.concat([existing_orders, pd.DataFrame(order_data, columns=["Customer", "Shop", "Food Item", "Price"])], ignore_index=True)
         updated_orders.to_excel(ORDER_FILE, index=False, engine="openpyxl")
 
         # Update Session State
         st.session_state.order_history.extend(order_data)
 
         st.success(f"✅ Order placed successfully! Total: ₹{total_bill}")
-
-# Order Actions Section
-st.markdown("---")
-st.subheader("📦 Order Actions")
-
-col1, col2, col3 = st.columns(3)
-
-# Generate Bill
-with col1:
-    if st.button("📄 Generate Bill"):
-        try:
-            orders = pd.read_excel(ORDER_FILE, engine="openpyxl")
-            last_order = orders[(orders["Customer"] == customer_name) & (orders["Shop"] == shop_name)].tail(len(selected_items))
-
-            if not last_order.empty:
-                bill_text = f"### 🧾 Bill Receipt\n**Customer:** {customer_name}\n\n**Shop:** {shop_name}\n\n**Items:**\n"
-                total_price = 0
-
-                for _, row in last_order.iterrows():
-                    item_name, price = row["Food Item"], row["Price"]
-                    bill_text += f"- {item_name}: ₹{price}\n"
-                    total_price += price
-
-                bill_text += f"\n**Total: ₹{total_price}**"
-                st.markdown(bill_text)
-            else:
-                st.warning("⚠️ No recent orders found for this customer.")
-        except FileNotFoundError:
-            st.warning("⚠️ No order history found!")
-
-# Clear Orders
-with col2:
-    if st.button("🗑️ Clear Orders"):
-        if os.path.exists(ORDER_FILE):
-            os.remove(ORDER_FILE)
-            st.session_state.order_history = []
-            st.success("✅ All orders have been cleared!")
-        else:
-            st.warning("⚠️ No orders to clear.")
-
-# View Revenue
-with col3:
-    if st.button("💰 View Revenue"):
-        try:
-            orders = pd.read_excel(ORDER_FILE, engine="openpyxl")
-            total_revenue = orders["Price"].sum()
-            st.info(f"💰 Total Revenue: ₹{total_revenue}")
-        except FileNotFoundError:
-            st.warning("⚠️ No revenue data available.")
-
-# Customer List
-if st.button("🧑‍🤝‍🧑 View Customers"):
-    try:
-        orders = pd.read_excel(ORDER_FILE, engine="openpyxl")
-        customers = orders["Customer"].unique()
-        st.write("👤 **Unique Customers:**")
-        st.write(customers if len(customers) > 0 else "No customers yet.")
-    except FileNotFoundError:
-        st.warning("⚠️ No customer data available.")
