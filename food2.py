@@ -68,13 +68,16 @@ if selected_items and st.button("✅ Confirm Order"):
     else:
         order_data = [[customer_name, shop_name, item, filtered_menu[item]["price"]] for item in selected_items]
 
-        # Save Order to Excel
-        try:
+        # Ensure order history file exists and load existing data
+        if os.path.exists(ORDER_FILE):
             existing_orders = pd.read_excel(ORDER_FILE, engine="openpyxl")
-            updated_orders = pd.concat([existing_orders, pd.DataFrame(order_data, columns=["Customer", "Shop", "Food Item", "Price"])], ignore_index=True)
-        except FileNotFoundError:
-            updated_orders = pd.DataFrame(order_data, columns=["Customer", "Shop", "Food Item", "Price"])
+        else:
+            existing_orders = pd.DataFrame(columns=["Customer", "Shop", "Food Item", "Price"])
 
+        # Append new order to the existing orders
+        updated_orders = pd.concat([existing_orders, pd.DataFrame(order_data, columns=["Customer", "Shop", "Food Item", "Price"])], ignore_index=True)
+
+        # Save updated orders back to the Excel file
         updated_orders.to_excel(ORDER_FILE, index=False, engine="openpyxl")
 
         # Update Session State
@@ -140,4 +143,3 @@ if st.button("🧑‍🤝‍🧑 View Customers"):
         st.write(customers if len(customers) > 0 else "No customers yet.")
     except FileNotFoundError:
         st.warning("⚠️ No customer data available.")
-
