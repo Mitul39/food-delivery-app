@@ -140,3 +140,4 @@ if st.button("🧑‍🤝‍🧑 View Customers"):
         st.write(customers if len(customers) > 0 else "No customers yet.")
     except FileNotFoundError:
         st.warning("⚠️ No customer data available.")
+
