@@ -66,23 +66,27 @@ if selected_items and st.button("✅ Confirm Order"):
     if not customer_name.strip():
         st.error("⚠️ Please enter your name!")
     else:
+        # Prepare order data
         order_data = [[customer_name, shop_name, item, filtered_menu[item]["price"]] for item in selected_items]
 
-        # Ensure order history file exists and load existing data
+        # Check if the order history file exists, otherwise create it
         if os.path.exists(ORDER_FILE):
-            existing_orders = pd.read_excel(ORDER_FILE, engine="openpyxl")
+            # If file exists, load it
+            orders = pd.read_excel(ORDER_FILE, engine="openpyxl")
         else:
-            existing_orders = pd.DataFrame(columns=["Customer", "Shop", "Food Item", "Price"])
+            # If file doesn't exist, create an empty dataframe
+            orders = pd.DataFrame(columns=["Customer", "Shop", "Food Item", "Price"])
 
-        # Append new order to the existing orders
-        updated_orders = pd.concat([existing_orders, pd.DataFrame(order_data, columns=["Customer", "Shop", "Food Item", "Price"])], ignore_index=True)
+        # Append the new order to the existing orders
+        updated_orders = pd.concat([orders, pd.DataFrame(order_data, columns=["Customer", "Shop", "Food Item", "Price"])], ignore_index=True)
 
-        # Save updated orders back to the Excel file
+        # Save the updated orders back to the Excel file
         updated_orders.to_excel(ORDER_FILE, index=False, engine="openpyxl")
 
         # Update Session State
         st.session_state.order_history.extend(order_data)
 
+        # Show Success
         st.success(f"✅ Order placed successfully! Total: ₹{total_bill}")
 
 # Order Actions Section
